@@ -46,7 +46,7 @@ jobs:
             show { print }
           ' CHANGELOG.md > release_notes.md
           test -s release_notes.md || echo "No changelog entry for ${GITHUB_REF_NAME}." > release_notes.md
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           body_path: release_notes.md
           files: dist/*
