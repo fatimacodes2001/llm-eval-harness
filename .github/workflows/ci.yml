@@ -5,23 +5,78 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
-    runs-on: ubuntu-latest
+    name: lint · types · tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: v0.82.1
           cache: true
-      - name: Lint + typecheck + tests
-        run: pixi run check
-      - name: Validate golden set
-        run: pixi run validate-data
-      - name: Offline regression gate (mock providers, no secrets)
-        run: pixi run demo
+          locked: true
+      - run: pixi run lint
+      - run: pixi run typecheck
+      - run: pixi run test
+      - run: pixi run validate-data
+
+  offline-eval:
+    name: offline eval + regression gate
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.82.1
+          cache: true
+          locked: true
+      - run: pixi run demo
+      - name: Publish comparison to job summary
+        if: always()
+        run: |
+          {
+            echo "## Offline regression gate"
+            cat reports/mock_candidate/compare_vs_mock_baseline.md
+            echo
+            echo "<details><summary>candidate report</summary>"
+            echo
+            cat reports/mock_candidate/report.md
+            echo
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: eval-reports
+          name: eval-reports-${{ github.sha }}
           path: reports/
+          retention-days: 14
+
+  build:
+    name: build distribution
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.82.1
+          cache: true
+          locked: true
+      - run: pixi run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/

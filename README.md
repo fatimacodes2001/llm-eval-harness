@@ -36,8 +36,8 @@ pixi run eval-candidate  # claude-opus-5-5, 3-shot, schema enforced by the API
 pixi run eval-compare
 ```
 
-Other tasks: `pixi run check` (ruff, mypy, pytest), `pixi run validate-data`,
-`pixi run make-data` to regenerate the synthetic set.
+`make help` lists the rest. Every target wraps a pixi task; `pixi.toml` is the source
+of truth and `make` is there for people who reach for it first.
 
 ## What a run produces
 
@@ -130,6 +130,31 @@ file path and the git sha. Two reports can always be compared knowing what chang
 **Cost is tracked, and the stable prefix is cached.** The system prompt and few-shot
 block carry `cache_control`; only the per-example user turn is uncached. Token usage
 including cache reads and writes is recorded per example and priced.
+
+## Environments and secrets
+
+Two pixi environments share one solve group, so they resolve to the same versions:
+`default` has the dev tools, `prod` is runtime only and is what the real-model
+workflow installs. `pixi install --locked` is used everywhere in CI and fails if
+`pixi.lock` is stale, so dependency changes go through `make lock` and a committed lock.
+
+The only secret is `ANTHROPIC_API_KEY`. Locally it comes from the environment or a
+gitignored `.env` (the CLI loads it). In GitHub it lives in the `eval` environment's
+secrets and is only exposed to the `eval` workflow, never to PR builds.
+
+## CI/CD
+
+Three workflows under `.github/workflows/`:
+
+| workflow | trigger | what it does |
+|---|---|---|
+| `ci` | push to main, PRs | lint, mypy, tests on Ubuntu and macOS; offline eval with the mock providers and the regression gate, comparison table in the job summary, reports as artefacts; build sdist and wheel |
+| `release` | tag `v*.*.*` | checks the tag matches `__version__`, re-runs checks and the offline eval, builds, creates a GitHub release with the matching CHANGELOG section as notes. PyPI publishing via trusted publishing is wired and off by default |
+| `eval` | manual, weekly | real-model baseline and candidate on the `prod` environment, cached responses restored between runs, `compare` as the gate, reports kept 90 days |
+
+Release is `make release VERSION=x.y.z`: it refuses a dirty tree or a non-main branch,
+runs the checks, bumps the version, dates the changelog, tags and pushes. The workflow
+does the rest. Dependabot keeps the actions current.
 
 ## Adapting it
 

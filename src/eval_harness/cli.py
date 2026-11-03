@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 
 import typer
+from dotenv import load_dotenv
 from rich.console import Console
 
 from eval_harness.config import load_config
@@ -28,6 +29,7 @@ VERBOSE = typer.Option(False, "--verbose", "-v")
 
 @app.callback()
 def _setup(verbose: bool = VERBOSE) -> None:
+    load_dotenv()
     logging.basicConfig(level=logging.INFO if verbose else logging.WARNING, format="%(message)s")
 
 

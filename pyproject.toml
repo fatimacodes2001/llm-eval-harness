@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "eval-harness"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Reproducible evaluation harness for LLM structured-extraction tasks"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -17,10 +17,18 @@ dependencies = [
   "pyyaml>=6",
   "numpy>=1.26",
   "jsonschema>=4.21",
+  "python-dotenv>=1.0",
 ]
+
+[project.urls]
+Repository = "https://github.com/fatimacodes2001/llm-eval-harness"
+Changelog = "https://github.com/fatimacodes2001/llm-eval-harness/blob/main/CHANGELOG.md"
 
 [project.scripts]
 eval-harness = "eval_harness.cli:app"
+
+[tool.hatch.version]
+path = "src/eval_harness/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/eval_harness"]

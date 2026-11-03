@@ -1,6 +1,5 @@
 [workspace]
 name = "llm-eval-harness"
-version = "0.1.0"
 description = "A reproducible evaluation harness for LLM structured-extraction tasks (sample / reference implementation)"
 authors = ["Fatima Tuz Zehra"]
 channels = ["conda-forge"]
@@ -15,10 +14,15 @@ pyyaml = ">=6"
 numpy = ">=1.26"
 jsonschema = ">=4.21"
 httpx = ">=0.27"
+python-dotenv = ">=1.0"
 
 [pypi-dependencies]
 anthropic = ">=0.50"
 eval-harness = { path = ".", editable = true }
+
+[feature.build.dependencies]
+python-build = ">=1.2"
+twine = ">=5"
 
 [feature.dev.dependencies]
 pytest = ">=8"
@@ -31,7 +35,9 @@ types-pyyaml = "*"
 types-jsonschema = "*"
 
 [environments]
-default = { features = ["dev"], solve-group = "default" }
+# default: everything a developer needs. prod: runtime only, same resolved versions.
+default = { features = ["dev", "build"], solve-group = "default" }
+prod = { features = [], solve-group = "default" }
 
 [tasks]
 # --- quality gates ---------------------------------------------------------
@@ -39,7 +45,8 @@ fmt = "ruff format src tests scripts"
 lint = "ruff check src tests scripts && ruff format --check src tests scripts"
 typecheck = "mypy src"
 test = "pytest"
-check = { depends-on = ["lint", "typecheck", "test"] }
+check = { depends-on = ["lint", "typecheck", "test", "validate-data"] }
+build = "rm -rf dist && python -m build && twine check dist/*"
 
 # --- data ------------------------------------------------------------------
 make-data = "python scripts/make_synthetic_golden.py --n 60 --seed 7 --out data/golden/hazards_v1.jsonl"
@@ -54,4 +61,5 @@ demo = { depends-on = ["demo-baseline", "demo-candidate", "demo-compare"] }
 # --- real model runs (need ANTHROPIC_API_KEY) ------------------------------
 eval-baseline = "eval-harness run configs/claude_baseline.yaml"
 eval-candidate = "eval-harness run configs/claude_candidate.yaml"
-eval-compare = "eval-harness compare reports/claude_baseline reports/claude_candidate --min-f1-delta 0.0"
+eval-compare = "eval-harness compare reports/claude_baseline reports/claude_candidate --min-f1-delta 0.0 --max-hallucination 0.05"
+smoke = "eval-harness run configs/claude_candidate.yaml --limit 5 --no-cache"

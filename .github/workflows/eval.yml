@@ -1,0 +1,71 @@
+# Real-model evaluation. Runs on demand and weekly, never on PRs (it costs money and
+# needs a secret). Fails if the candidate regresses against the baseline.
+name: eval
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Evaluate only the first N test examples (blank = all)"
+        required: false
+        default: ""
+  schedule:
+    - cron: "0 20 * * 0"   # Sunday 20:00 UTC = Monday 06:00 Brisbane
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eval
+  cancel-in-progress: false
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    environment: eval
+    timeout-minutes: 60
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.82.1
+          cache: true
+          locked: true
+          environments: prod
+      - name: Restore response cache
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: eval-cache-${{ hashFiles('data/golden/*.jsonl', 'src/eval_harness/prompts.py', 'configs/claude_*.yaml') }}
+          restore-keys: eval-cache-
+      - name: Baseline
+        run: pixi run -e prod eval-harness run configs/claude_baseline.yaml ${LIMIT:+--limit $LIMIT}
+        env:
+          LIMIT: ${{ inputs.limit }}
+      - name: Candidate
+        run: pixi run -e prod eval-harness run configs/claude_candidate.yaml ${LIMIT:+--limit $LIMIT}
+        env:
+          LIMIT: ${{ inputs.limit }}
+      - name: Regression gate
+        run: pixi run -e prod eval-compare
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Real-model eval"
+            cat reports/claude_candidate/compare_vs_claude_baseline.md 2>/dev/null || echo "compare did not run"
+            echo
+            for r in claude_baseline claude_candidate; do
+              echo "<details><summary>$r</summary>"; echo
+              cat "reports/$r/report.md" 2>/dev/null || echo "missing"
+              echo; echo "</details>"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-eval-reports-${{ github.run_id }}
+          path: reports/
+          retention-days: 90
