@@ -21,7 +21,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: v0.82.1
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: check
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: v0.82.1
@@ -69,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: check
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: v0.82.1
