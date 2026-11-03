@@ -27,15 +27,15 @@ jobs:
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.8.1
+      - uses: actions/checkout@v7
+      - uses: prefix-dev/setup-pixi@v0.11.2
         with:
           pixi-version: v0.82.1
           cache: true
           locked: true
           environments: prod
       - name: Restore response cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache
           key: eval-cache-${{ hashFiles('data/golden/*.jsonl', 'src/eval_harness/prompts.py', 'configs/claude_*.yaml') }}
@@ -63,7 +63,7 @@ jobs:
               echo; echo "</details>"
             done
           } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: real-eval-reports-${{ github.run_id }}
