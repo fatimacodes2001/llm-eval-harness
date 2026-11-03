@@ -1,0 +1,12 @@
+# "Before": small model, zero-shot, JSON requested in the prompt and parsed from text.
+name: claude_baseline
+golden_path: data/golden/hazards_v1.jsonl
+split: test
+few_shot_k: 0
+structured_output: false
+concurrency: 4
+provider:
+  kind: anthropic
+  model: claude-haiku-5-5
+  structured_output: false
+  effort: low

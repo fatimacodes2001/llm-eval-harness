@@ -1,0 +1,19 @@
+# pixi
+.pixi/
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+# harness artefacts
+.cache/
+reports/*
+!reports/.gitkeep
+# secrets
+.env

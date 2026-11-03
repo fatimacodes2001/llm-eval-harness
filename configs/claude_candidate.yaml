@@ -1,0 +1,17 @@
+# "After": stronger model, few-shot from the dev split, schema enforced by the API.
+name: claude_candidate
+golden_path: data/golden/hazards_v1.jsonl
+split: test
+few_shot_k: 3
+structured_output: true
+concurrency: 4
+provider:
+  kind: anthropic
+  model: claude-opus-5-5
+  structured_output: true
+  effort: low
+judge:
+  kind: anthropic
+  model: claude-sonnet-5-5
+  structured_output: true
+  effort: low

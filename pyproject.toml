@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eval-harness"
+version = "0.1.0"
+description = "Reproducible evaluation harness for LLM structured-extraction tasks"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = [
+  "anthropic>=0.50",
+  "pydantic>=2.7",
+  "typer>=0.12",
+  "rich>=13",
+  "pyyaml>=6",
+  "numpy>=1.26",
+  "jsonschema>=4.21",
+]
+
+[project.scripts]
+eval-harness = "eval_harness.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/eval_harness"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "N", "W", "RUF", "ANN", "PL"]
+ignore = ["ANN401", "PLR0913", "PLR0917", "PLR2004", "PLC0415"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ANN", "PLR", "E501"]
+"scripts/*" = ["PLR"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --cov=eval_harness --cov-report=term-missing"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = ["error::DeprecationWarning:eval_harness.*"]

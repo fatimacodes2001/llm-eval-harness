@@ -1,0 +1,16 @@
+name: mock_candidate
+golden_path: data/golden/hazards_v1.jsonl
+split: test
+few_shot_k: 3
+structured_output: true
+provider:
+  kind: mock
+  name: candidate
+  seed: 1
+  miss_rate: 0.03
+  hallucination_rate: 0.015
+  malformed_rate: 0.0
+  score_noise_rate: 0.05
+judge:
+  kind: mock
+  name: judge
